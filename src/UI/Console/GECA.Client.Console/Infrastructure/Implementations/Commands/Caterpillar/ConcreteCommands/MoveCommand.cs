@@ -5,72 +5,70 @@ using GECA.Client.Console.Domain.Enums;
 using GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.BaseCommands;
 using GECA.Client.Console.Shared;
 
-namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands
+namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpillar.ConcreteCommands;
+
+public class MoveCommand : BaseMoveCommand1
 {
-    public class MoveCommand : BaseMoveCommand1
+    public MoveCommand(CaterpillarSimulation simulation, IServiceManager ServiceManager) : base(simulation, ServiceManager)
     {
-        public MoveCommand(CaterpillarSimulation simulation, IServiceManager ServiceManager) : base(simulation, ServiceManager)
+    }
+
+    public override void Execute()
+    {
+        try
         {
-        }
-
-        public override void Execute()
-        {
-            try
+            MoveCaterpillarRequest moveRequest = new()
             {
-                MoveCaterpillarRequest moveRequest = new()
-                {
-                    CurrentRow = previousRow,
-                    CurrentColumn = previousColumn,
-                    Direction = AppConstants.Direction,
-                    Steps = AppConstants.Steps
-                };
+                CurrentRow = previousRow,
+                CurrentColumn = previousColumn,
+                Direction = AppConstants.Direction,
+                Steps = AppConstants.Steps
+            };
 
-                var response = serviceManager.CaterpillarService.MoveCaterpillar(map, moveRequest).Result;
+            var response = serviceManager.CaterpillarService.MoveCaterpillar(map, moveRequest).Result;
 
-                if (response.Successful)
-                {
-                    CaterpillarSimulation.caterpillarRow = response.NewCatapillarRow;
-                    CaterpillarSimulation.caterpillarColumn = response.NewCatapillarColumn;
-
-                    // Update map representation
-                    map[previousRow, previousColumn] = '.';
-                    map[CaterpillarSimulation.caterpillarRow, CaterpillarSimulation.caterpillarColumn] = 'C';
-
-                    HandleEventType(response);
-                }
-            }
-            catch (Exception)
+            if (response.Successful)
             {
-                throw;
+                CaterpillarSimulation.caterpillarRow = response.NewCatapillarRow;
+                CaterpillarSimulation.caterpillarColumn = response.NewCatapillarColumn;
+
+                // Update map representation
+                map[previousRow, previousColumn] = '.';
+                map[CaterpillarSimulation.caterpillarRow, CaterpillarSimulation.caterpillarColumn] = 'C';
+
+                HandleEventType(response);
             }
         }
-
-        private void HandleEventType(MoveCaterpillarResponse response)
+        catch (Exception)
         {
-            switch (response.EventType)
-            {
-                case EventType.Moved:
-                    // Normal movement
-                    break;
-                case EventType.Obstacle:
-                    simulation.Caterpillar.Segments.Clear();
-                    simulation.Caterpillar.Segments.Add(new Segment(SegmentType.Head));
-                    simulation.Caterpillar.Segments.Add(new Segment(SegmentType.Tail));
-                    break;
-                case EventType.Booster:
-                    var growShrinkResponse = serviceManager.CaterpillarService.GrowShrinkCaterpillar(new GrowShrinkCaterpillarRequest
-                    {
-                        Caterpillar = new CaterpillarDto { Caterpillar = simulation.Caterpillar },
-                        Grow = AppConstants.GrowOrShrink
-                    }).Result;
-                    break;
-                case EventType.Spice:
-                    serviceManager.CaterpillarService.CollectAndStoreSpice(response.NewCatapillarRow, response.NewCatapillarColumn).Wait();
-                    break;
-                default:
-                    break;
-            }
+            throw;
         }
     }
 
+    private void HandleEventType(MoveCaterpillarResponse response)
+    {
+        switch (response.EventType)
+        {
+            case EventType.Moved:
+                // Normal movement
+                break;
+            case EventType.Obstacle:
+                simulation.Caterpillar.Segments.Clear();
+                simulation.Caterpillar.Segments.Add(new Segment(SegmentType.Head));
+                simulation.Caterpillar.Segments.Add(new Segment(SegmentType.Tail));
+                break;
+            case EventType.Booster:
+                var growShrinkResponse = serviceManager.CaterpillarService.GrowShrinkCaterpillar(new GrowShrinkCaterpillarRequest
+                {
+                    Caterpillar = new CaterpillarDto { Caterpillar = simulation.Caterpillar },
+                    Grow = AppConstants.GrowOrShrink
+                }).Result;
+                break;
+            case EventType.Spice:
+                serviceManager.CaterpillarService.CollectAndStoreSpice(response.NewCatapillarRow, response.NewCatapillarColumn).Wait();
+                break;
+            default:
+                break;
+        }
+    }
 }
