@@ -95,8 +95,6 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
                     RestorePreviousState();
 
-                    var growShrinkResponse = new GrowShrinkCaterpillarResponse(); 
-
                     // Revert the caterpillar size change
                     if (caterpillar.CurrentSegmentCount > previousSegments.Count)
                     {
@@ -108,7 +106,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
                         caterpillar.Segments.RemoveAt(caterpillar.Segments.Count - 1);
 
-                        growShrinkResponse =  await caterpillarService.GrowShrinkCaterpillar(growShrinkRequest);
+                        await caterpillarService.GrowShrinkCaterpillar(growShrinkRequest);
                     }
                     else if (caterpillar.CurrentSegmentCount < previousSegments.Count)
                     {
@@ -120,7 +118,7 @@ namespace GECA.Client.Console.Infrastructure.Implementations.Commands.Caterpilla
 
                         caterpillar.Segments.Add(new Segment(SegmentType.Intermediate));
 
-                        growShrinkResponse = await caterpillarService.GrowShrinkCaterpillar(growShrinkRequest);
+                        await caterpillarService.GrowShrinkCaterpillar(growShrinkRequest);
                     }
 
                     map[previousRow, previousColumn] = 'C';
